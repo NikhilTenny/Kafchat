@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from fastapi import Depends
-from sqlmodel import Field, SQLModel, Session, Relationship
+from sqlmodel import Field, SQLModel, Session, select
 from pydantic import BaseModel
 from src.database import session_dep
 from src.authentication.utils import verify_password
-from typing import List
+from typing import List, Union
 
 
 class UserBase(SQLModel):
@@ -35,6 +35,10 @@ class UserLogin(BaseModel):
 def get_user(session: Session, username):
     return session.query(User).filter(User.user_name== username).first()
 
+
+def get_user_by_id(session: Session, user_id):
+    return session.exec(select(User).filter(User.id == user_id)).first()
+
 def authenticate_user(session: Session, username: str, password: str):
     user = get_user(session,username)
     if not user:
@@ -53,7 +57,15 @@ def check_if_user_exists(user_name: str, session: session_dep) -> bool:
 def logout_user(user_name: str, session: session_dep) -> bool:
     if user := check_if_user_exists(user_name, session):
         pass
-        
+
+def list_users(session, current_user: Union[User,None] = None, ):
+    try:
+        users = session.exec(
+            select(User).filter(User.id != current_user["id"])
+        ).all()
+        return users
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error: {str(e)}")   
 
 
 

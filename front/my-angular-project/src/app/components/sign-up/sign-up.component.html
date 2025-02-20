@@ -1,0 +1,66 @@
+<div class="form-container">
+
+    <form #registrationForm="ngForm" (ngSubmit)="onSubmit(registrationForm)" class="form-signin login-form">
+        <h3 class="txt-color-mg">Sign Up</h3>
+        <label for="inputEmail" class="sr-only">user_name:</label>
+        <input name="user_name" type="user_name" id="inputEmail" class="form-control" ngModel required>
+      
+        <div *ngIf="registrationForm.controls['email']?.invalid && (registrationForm.controls['email'].dirty || registrationForm.controls['email'].touched)">
+          <div *ngIf="registrationForm.controls['email'].errors?.['required']" class="txt-error">
+            user_name is required.
+          </div>
+          <div *ngIf="registrationForm.controls['email'].errors?.['email']" class="txt-error">
+            user_name must be a valid email address.
+          </div>
+        </div>
+        <label for="first_name"  class="sr-only">First Name:</label>
+        <input type="text" id="first_name" name="first_name" class="form-control" ngModel required>
+      
+        <div *ngIf="registrationForm.controls['first_name']?.invalid && (registrationForm.controls['first_name'].dirty || registrationForm.controls['first_name'].touched)" class="txt-error">
+          First Name is required.
+        </div>
+      
+        <label for="last_name"  class="sr-only">Last Name:</label>
+        <input type="text" id="last_name" name="last_name" class="form-control" ngModel required>
+      
+        <div *ngIf="registrationForm.controls['last_name']?.invalid && (registrationForm.controls['last_name'].dirty || registrationForm.controls['last_name'].touched)" class="txt-error">
+          Last Name is required.
+        </div>
+      
+        <label for="inputEmail" class="sr-only">Password:</label>
+        <input type="password" id="password" name="password" class="form-control" ngModel minlength="8" required>
+      
+        <div *ngIf="registrationForm.controls['password']?.invalid && (registrationForm.controls['password'].dirty || registrationForm.controls['password'].touched)">
+          <div *ngIf="registrationForm.controls['password'].errors?.['required']" class="txt-error">
+            Password is required.
+          </div>
+          <div *ngIf="registrationForm.controls['password'].errors?.['minlength']" class="txt-error">
+            Password must be at least 8 characters long.
+          </div>
+        </div>
+      
+        <label for="confirmPassword"   class="sr-only">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" ngModel minlength="8" required>
+      
+        <div *ngIf="registrationForm.controls['confirmPassword']?.invalid && (registrationForm.controls['confirmPassword'].dirty || registrationForm.controls['confirmPassword'].touched)">
+          <div *ngIf="registrationForm.controls['confirmPassword'].errors?.['required']" class="txt-error">
+            Confirm Password is required.
+          </div>
+          <div *ngIf="registrationForm.controls['confirmPassword'].errors?.['minlength']" class="txt-error">
+            Confirm Password must be at least 8 characters long.
+          </div>
+          <div *ngIf="registrationForm.controls['confirmPassword'].errors?.['matchingPasswords']" class="txt-error">
+            Passwords do not match.
+          </div>
+        </div>
+      
+       
+        <div class="row">
+            <div class="col-8 mt-2 anchor"  (click)="openLoginPage()">Already User?</div>
+            <div class="col-4">
+              <button class="btn btn-lg btn-primary btn-block mt-2 right-corner"  [disabled]="!registrationForm.valid" type="submit">Sign Up</button>
+            </div>
+            
+        </div>
+    </form>
+</div>

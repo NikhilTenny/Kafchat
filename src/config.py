@@ -9,3 +9,9 @@ ALGORITHM = "HS256"
 
 TOPIC_NAME = "text-message"
 
+REDIS_SERVER = 'localhost'
+REDIS_PORT = 6379
+REDIS_CHANNEL = 'chat-message'
+
+KAFKA_SERVER = 'localhost'
+KAFKA_PORT = 9092

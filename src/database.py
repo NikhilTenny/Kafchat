@@ -14,6 +14,10 @@ def get_session():
     with Session(engine) as session:
         yield session
 
+def consume_session() -> Session:
+    return Session(engine)
+
+
 
 
 

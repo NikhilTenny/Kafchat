@@ -8,6 +8,6 @@ producer = KafkaProducer(
 )
 
 def send_to_kafka(topic: str, message: dict):
-    message["created_at"] = message["created_at"].isoformat()
+    # message["created_at"] = message["created_at"].isoformat()
     producer.send(topic, message)
-    producer.flush
+    producer.flush  

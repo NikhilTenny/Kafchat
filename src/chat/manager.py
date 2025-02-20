@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from fastapi import HTTPException
 from src.chat.models import Conversation, ConversationParticipants, Messages
 from src.chat.schemas import SendMessage
+from src.authentication.models import get_user_by_id
 
 
 def create_conversation(name: str, session: Session):
@@ -80,9 +81,7 @@ def get_chat_history(conv_id: int, session: Session):
             ).order_by(Messages.created_at)
         ).all()
 
-        if not chat_msgs:
-            raise HTTPException(status_code=404, detail="No messages found for this conversation.")
-
+        
         return chat_msgs
 
     except Exception as e:
@@ -90,18 +89,25 @@ def get_chat_history(conv_id: int, session: Session):
 
 
 
-def create_message(msg_data: SendMessage, user_id: int, session: Session):
+def create_message(msg_data: SendMessage, user: dict, session: Session):
     try:
+        conv_id = msg_data.get("conv_id")
+        if not conv_id:
+            receiver_user = get_user_by_id(session, msg_data['receiver_id'])
+            receiver_user_dict = receiver_user.dict()
+            conversation = create_new_chat(user, receiver_user_dict, session) 
+            conv_id = conversation.id
         msg = Messages(
-            body = msg_data["message_body"],
-            sender_id=user_id,
-            conv_id=msg_data["conv_id"]
+            body = msg_data["body"],
+            sender_id=user["id"],  
+            conv_id=conv_id
         )
         session.add(msg)
         session.commit()
         session.refresh(msg)
         return msg
     except Exception as e:
+        print(e)
         session.rollback()
         raise RuntimeError(f"Unexpected error: {str(e)}")
 

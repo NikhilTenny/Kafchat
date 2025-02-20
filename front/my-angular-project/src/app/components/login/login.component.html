@@ -1,0 +1,15 @@
+<div class="form-container">
+    <form class="form-signin login-form"  [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <h3 class="txt-color-mg">Sign in</h3>
+      <label for="inputEmail" class="sr-only">user_name address</label>
+      <input type="user_name" id="inputEmail" class="form-control" placeholder="user_name address" formControlName="user_name" required autofocus>
+      <label for="inputPassword" class="sr-only mt-2">Password</label>
+      <input type="password" id="inputPassword" class="form-control" placeholder="Password" formControlName="password" required>
+      <div class="row">
+        <div class="col-8 mt-2 anchor"  (click)="openRegistrationPage()">New User?</div>
+        <div class="col-4">
+          <button class="btn btn-lg btn-primary btn-block mt-2 right-corner" type="submit">Log in</button>
+        </div>
+      </div>
+    </form>
+  </div>

@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from src.authentication.models import UserCreate
+from src.authentication.models import UserCreate, list_users
 from src.database import session_dep, get_session
 from src.authentication import utils
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
-from typing import Annotated, Union
+from typing import Annotated, List, Union
+from src.authentication.utils import get_current_user
 
 from src.authentication.models import User, UserPublic, authenticate_user, check_if_user_exists
 router = APIRouter()
@@ -54,13 +55,28 @@ def user_login(form_data: OAuth2PasswordRequestForm = Depends(),
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token = utils.create_access_token({
+    user_data = {
         "id": user.id,
         "user": user.user_name,
         "first_name": user.first_name,
         "last_name": user.last_name,
-    })
-    return {"access_token": access_token, "token_type": "bearer"}
+    }
+    access_token = utils.create_access_token(user_data)
+    return {"access_token": access_token, "token_type": "bearer", "user_data":user_data}
+
+@router.get('/users', response_model=List[UserPublic])
+def user_list(  
+    session: session_dep,
+    user: User= Depends(get_current_user)
+):
+    try:
+        user_list = list_users(session, user)
+        return user_list
+    except:
+        raise HTTPException(status_code=500, detail="Failed to fetch users.")
+
+
+
     
 @router.post('/logout')
 def user_logout(username: str, session: session_dep):

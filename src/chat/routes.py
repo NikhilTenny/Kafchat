@@ -1,32 +1,40 @@
-from fastapi import APIRouter, HTTPException, status, Depends, WebSocket
-from fastapi.responses import HTMLResponse
-from src.authentication.models import UserCreate
-from src.database import session_dep, get_session
-from src.authentication import utils
-from sqlmodel import Session
-from typing import Annotated, Union
+from typing import List
+from fastapi import APIRouter, HTTPException, WebSocketDisconnect, status, Depends, WebSocket
 from src.authentication.utils import get_current_user
 from src.chat.schemas import SendMessage
 from src.authentication.models import User, get_user
 from src.chat.models import ConversationParticipants
-from src.chat.manager import get_or_create_conv, ConversationParticipants, get_chat_history, create_message
+from src.chat.manager import get_or_create_conv, ConversationParticipants, get_chat_history
 from src.kafka.producer import send_to_kafka
-from src.config import TOPIC_NAME
-router = APIRouter()
+from src.chat.socket_manager import SocketManager
+from src.chat.manager import create_message 
+from src.database import consume_session, session_dep
+from src.config import TOPIC_NAME, REDIS_CHANNEL, REDIS_SERVER, REDIS_PORT
+from redis.asyncio import Redis
+import json
 
+
+
+
+
+router = APIRouter()
+redis_client = Redis(host=REDIS_SERVER, port=REDIS_PORT, db=0)
+pubsub = redis_client.pubsub()
+
+sock_manager = SocketManager()
 
 @router.post('/message')
-def send_message(
+async def send_message(
     data: SendMessage, 
     session: session_dep,
     user: User= Depends(get_current_user)
 ):
     
-    msg = create_message(data.model_dump(), user['id'], session)
-    msg_dict = msg.model_dump()
-    send_to_kafka(TOPIC_NAME, msg_dict)
+    msg_data: dict = data.model_dump()
+    msg_data['user_data'] = user
 
-    return msg
+    send_to_kafka(TOPIC_NAME, msg_data)
+    return {"message", "Message send successfully"}
 
 
 @router.get('/chat-history')
@@ -44,58 +52,45 @@ def chat_history(
         raise HTTPException(status_code=500, detail="Failed to fetch conversation.")
 
     chat_history = get_chat_history(conversation.conv_id, session)
+    response = {
+        "conv_id": conversation.conv_id,
+        "chat_history": chat_history
+    }
 
-    return chat_history 
-
-    
-
-
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var ws = new WebSocket("ws://localhost:8000/ws");
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
+    return response 
 
 
-@router.get("/")
-async def get():
-    return HTMLResponse(html)
+active_connections: List[WebSocket] = []
 
-@router.websocket('/ws')
-async def get(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-   
-        await websocket.send_text(f"You have a Message!: {data}")
+@router.websocket('/ws/{user_id}')
+async def get(websocket: WebSocket, user_id: int):
+    await sock_manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+    except WebSocketDisconnect:
+        sock_manager.disconnect(user_id)
+
+
+
+
+async def listen_to_redis():
+    session = consume_session()
+    await pubsub.subscribe(REDIS_CHANNEL)
+        
+    async for message in pubsub.listen():
+        print(message)
+        if message['type'] == 'message':
+            try:
+                msg_data = json.loads(message["data"].decode('utf-8'))
+                user_data = msg_data["user_data"]
+                del msg_data["user_data"]
+                
+                msg = create_message(msg_data, user_data, session)
+                await sock_manager.personal_msg(msg_data, user_data['id'])
+            except Exception as e:
+                print(e)
+                
 
 
 

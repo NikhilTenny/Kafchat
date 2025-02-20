@@ -1,0 +1,6 @@
+.profile-img-resize {
+    width: 50px !important;  /* Set fixed width */
+    height: 50px !important; /* Set fixed height */
+    object-fit: cover; /* Ensures the image maintains aspect ratio and fills the area */
+    border-radius: 50%; /* Optional: makes the image circular */
+  }
