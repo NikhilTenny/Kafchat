@@ -9,16 +9,13 @@ from src.kafka.producer import send_to_kafka
 from src.chat.socket_manager import SocketManager
 from src.chat.manager import create_message 
 from src.database import consume_session, session_dep
-from src.config import TOPIC_NAME, REDIS_CHANNEL, REDIS_SERVER, REDIS_PORT
-from redis.asyncio import Redis
+from src.config import TOPIC_NAME, REDIS_CHANNEL
+from src.redis import redis_client
 import json
 
 
-
-
-
 router = APIRouter()
-redis_client = Redis(host=REDIS_SERVER, port=REDIS_PORT, db=0)
+
 pubsub = redis_client.pubsub()
 
 sock_manager = SocketManager()

@@ -6,6 +6,7 @@ import json
 class SocketManager:
     def __init__(self):
         self.active_connections: dict[int,WebSocket] = {}
+
     
     async def connect(self, websocket: WebSocket, id: int):
         await websocket.accept()
@@ -23,6 +24,7 @@ class SocketManager:
             print(f'userid {id} websocket not connected')
             
     async def broadcast(self, message: dict):
+
         for connection in self.active_connections:
             await connection.send_text(json.dumps(message))
             

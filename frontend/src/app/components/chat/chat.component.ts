@@ -62,14 +62,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         error: (err) => console.error('Message send failed', err),
       });
 
-      // this.activeUser.ws.send(
-      //   JSON.stringify(
-      //     {
-      //       reciever_id: this.activeUser.id, 
-      //       body: val, 
-      //       conv_id: this.activeUser.conv_id
-      //     })
-      //   );
     }
     inputField.value = '';
   }
