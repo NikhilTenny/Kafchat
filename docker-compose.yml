@@ -1,0 +1,77 @@
+services:
+  broker:
+    image: apache/kafka:latest
+    hostname: broker
+    container_name: broker
+    ports:
+      - 9092:9092
+    networks:
+      - chat_network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://broker:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    
+
+  fastapi:
+    build: 
+      context: /backend
+      dockerfile: Dockerfile
+    image: fastapi_app
+    container_name: fastapi_app
+    ports:
+     - "8000:8000"
+    networks:
+      - chat_network
+    depends_on:
+      - broker
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    hostname: redis_server
+    container_name: redis
+    ports:
+     - "6379:6379"
+    networks:
+      - chat_network
+    restart: unless-stopped
+
+  consumer:
+    build: 
+        context: /backend
+    image: fastapi_app
+    container_name: consumer
+    networks:
+      - chat_network
+    depends_on:
+      - broker
+      - redis
+      - fastapi
+    command: ["python", "consumer.py"]
+    restart: unless-stopped
+
+  frontend:
+    image: kafchat-app
+    container_name: frontend
+    ports:
+     - "4200:4200"
+    networks:
+      - chat_network
+
+networks:
+  chat_network:
+    driver: bridge

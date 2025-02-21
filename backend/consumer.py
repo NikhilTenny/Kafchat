@@ -9,15 +9,16 @@ from redis import Redis
 redis_client = Redis(host=REDIS_SERVER, port=REDIS_PORT, db=0)
 
 my_consumer = KafkaConsumer(  
-    bootstrap_servers = [f'{KAFKA_SERVER} : {KAFKA_PORT}'],  
+    bootstrap_servers = [f'{KAFKA_SERVER}:{KAFKA_PORT}'],  
     auto_offset_reset = 'earliest',  
     enable_auto_commit = True,  
     group_id = 'my-group',  
     value_deserializer = lambda x : json.loads(x.decode('utf-8'))  
     )  
 
-my_consumer.subscribe([TOPIC_NAME])
 
+
+my_consumer.subscribe([TOPIC_NAME])
 
 async def consume_messages():
     

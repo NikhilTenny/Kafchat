@@ -8,6 +8,7 @@ from src.database import create_db_and_tables
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI(
     title="Doc-Assist API"
 )
